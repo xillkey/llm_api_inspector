@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; connect-src 'self' http://127.0.0.1:*" />
+    <title>LLM API Inspector</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <div class="brand">
+          <img class="brand-logo" src="imgs/logo-small.png" alt="LLM API Inspector" width="40" height="40" />
+          <div>
+            <h1>LLM API Inspector</h1>
+            <p id="proxy-status">Proxy starting...</p>
+            <p id="server-status" class="server-status" aria-live="polite"></p>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <button id="btn-settings" class="btn btn-ghost" type="button">设置</button>
+          <button id="btn-clear" class="btn btn-ghost" type="button">清空记录</button>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="sidebar">
+          <div class="inspect-switch-bar">
+            <label class="inspect-switch" for="inspect-toggle">
+              <span class="inspect-switch-label">开始侦听请求</span>
+              <input id="inspect-toggle" type="checkbox" />
+              <span class="switch-slider" aria-hidden="true"></span>
+            </label>
+            <!-- Live 开关暂时隐藏
+            <label class="inspect-switch" for="live-follow-toggle">
+              <span class="inspect-switch-label">Live</span>
+              <input id="live-follow-toggle" type="checkbox" />
+              <span class="switch-slider" aria-hidden="true"></span>
+            </label>
+            -->
+          </div>
+          <div id="connect-panel" class="connect-panel"></div>
+          <div class="sidebar-toolbar">
+            <input id="search-input" type="search" placeholder="搜索模型、消息..." />
+            <select id="state-filter">
+              <option value="all">全部</option>
+              <option value="active">进行中</option>
+              <option value="done">已完成</option>
+              <option value="error">出错</option>
+              <option value="aborted">已中断</option>
+            </select>
+          </div>
+          <div id="request-list" class="request-list"></div>
+        </aside>
+
+        <section id="detail-panel" class="detail-panel">
+          <div class="empty-state">
+            <h2>选择一个请求</h2>
+            <p>左侧列表展示所有经过代理的 LLM API 请求。进行中的请求支持 Live 实时查看。</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="settings-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-modal></div>
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <header class="modal-header">
+          <h2 id="settings-title">设置</h2>
+          <button class="btn btn-ghost" type="button" data-close-modal>关闭</button>
+        </header>
+        <div id="settings-content" class="modal-body"></div>
+      </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

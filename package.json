@@ -1,0 +1,62 @@
+{
+  "name": "llm-inspector",
+  "version": "0.1.0",
+  "description": "LLM API proxy inspector with live request viewing",
+  "main": "electron/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "verify:sqlite": "electron electron/verify-sqlite.js",
+    "prebuild": "node scripts/check-node.cjs",
+    "prebuild:mac": "node scripts/check-node.cjs",
+    "prebuild:win": "node scripts/check-node.cjs",
+    "prebuild:linux": "node scripts/check-node.cjs",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux",
+    "generate:icons": "bash scripts/generate-icons.sh && node scripts/generate-ico.cjs"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "devDependencies": {
+    "electron": "^43.2.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.llm-api-inspector.app",
+    "productName": "LLM API Inspector",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**/*",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "icon": "build/icon.icns",
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    }
+  }
+}
