@@ -1,56 +1,68 @@
-# LLM API Inspector
+<p align="center">
+  <img src="renderer/imgs/logo.png" alt="LLM API Inspector logo" width="160">
+</p>
 
-LLM API Inspector 是一个 LLM API 中转代理与报文查看器。它对外提供 OpenAI 兼容的 `/v1/chat/completions` 接口，并将请求参数、工具注册、流式响应完整记录下来，支持对进行中请求的 Live 实时查看。
+<h1 align="center">LLM API Inspector</h1>
 
-## 功能
+<p align="center">English | <a href="README_CN.md">简体中文</a></p>
 
-- 开箱即用，免除繁琐依赖安装
-- OpenAI 兼容协议代理（chat/completions）
-- 支持流式与非流式请求
-- 查看 messages、tools 注册、采样参数
-- 支持 Live 实时查看模型思考过程与回答
-- 上游 Base URL 配置
-- SQLite 本地持久化历史记录
+LLM API Inspector is a proxy and traffic viewer for LLM APIs. It exposes an OpenAI-compatible `/v1/chat/completions` endpoint, records the full request parameters, tool definitions and streaming responses, and lets you watch in-flight requests live.
 
+## Screenshots
 
+<p align="center">
+  <img src="docs/screenshots/chat-view.png" alt="Conversation view" width="800">
+  <br>
+  <img src="docs/screenshots/overview.png" alt="Request overview" width="800">
+</p>
 
-## 使用方式
+## Features
 
-1. 启动应用
-2. 打开「设置」，填写 **上游 Base URL**（例如 `https://api.openai.com/v1`）并保存
-3. 将客户端指向代理地址，使用真实的 **model** 和 **API Key**（与直连上游时相同）：
+- Works out of the box, no tedious dependency setup
+- OpenAI-compatible proxy (chat/completions)
+- Supports both streaming and non-streaming requests
+- Inspect messages, registered tools and sampling parameters
+- Live view of the model's reasoning and answer as they arrive
+- Configurable upstream Base URL
+- Local history persisted in SQLite
+
+## Getting Started
+
+1. Launch the app
+2. Open **Settings**, fill in the **upstream Base URL** (for example `https://api.openai.com/v1`) and save
+3. Point your client at the proxy address, using your real **model** and **API key** (the same ones you would use when calling upstream directly):
 
 ```bash
 export OPENAI_BASE_URL=http://127.0.0.1:8317/v1
-export OPENAI_API_KEY=你的上游 API Key
+export OPENAI_API_KEY=your-upstream-api-key
 ```
 
-4. 像平常一样调用 Chat Completions，左侧会出现请求记录
+4. Call Chat Completions as usual — the request shows up in the list on the left
 
-代理会将请求原样转发到上游，`Authorization` 等请求头会透传，仅做中转与抓包。
+The proxy forwards requests to the upstream service as-is; headers such as `Authorization` are passed through untouched. It only relays and captures traffic.
 
-左侧「连接信息」可查看代理 Base URL 与当前上游地址；也可在设置中调整监听端口、是否允许局域网访问。
+The **Connection Info** panel on the left shows the proxy Base URL and the current upstream address. You can also change the listening port and toggle LAN access in Settings.
 
-## 使用示例
+## Examples
 
-非流式：
+Non-streaming:
 
 ```bash
 curl http://127.0.0.1:8317/v1/chat/completions \
   -H 'Content-Type: application/json' \
-  -H 'Authorization: Bearer 你的上游 API Key' \
+  -H 'Authorization: Bearer your-upstream-api-key' \
   -d '{
     "model": "gpt-4o",
     "messages": [{"role": "user", "content": "hello"}]
   }'
 ```
 
-流式：
+Streaming:
 
 ```bash
 curl http://127.0.0.1:8317/v1/chat/completions \
   -H 'Content-Type: application/json' \
-  -H 'Authorization: Bearer 你的上游 API Key' \
+  -H 'Authorization: Bearer your-upstream-api-key' \
   -d '{
     "model": "gpt-4o",
     "stream": true,
@@ -58,11 +70,11 @@ curl http://127.0.0.1:8317/v1/chat/completions \
   }'
 ```
 
-## 开发指南
+## Development
 
-### 环境要求
+### Requirements
 
-- Node.js 22.x（项目已提供 `.nvmrc`）
+- Node.js 22.x (an `.nvmrc` is included)
 - macOS / Windows / Linux
 
 ```bash
@@ -70,32 +82,32 @@ nvm use
 npm install
 ```
 
-如果 Electron 二进制下载失败，可尝试：
+If downloading the Electron binary fails, try a mirror:
 
 ```bash
 export ELECTRON_MIRROR="https://npmmirror.com/mirrors/electron/"
 npm install
 ```
 
-### 开发运行
+### Running in development
 
 ```bash
 npm start
 ```
 
-验证内置 SQLite 模块：
+Verify the built-in SQLite module:
 
 ```bash
 npm run verify:sqlite
 ```
 
-### 打包
+### Building
 
 ```bash
 npm run build
 ```
 
-平台专用：
+Platform-specific:
 
 ```bash
 npm run build:mac
@@ -103,16 +115,15 @@ npm run build:win
 npm run build:linux
 ```
 
-### 项目结构
+### Project structure
 
 ```
-electron/     主进程、代理、SQLite
-renderer/     原生 HTML/CSS/JS 界面
+electron/     main process, proxy, SQLite
+renderer/     plain HTML/CSS/JS UI
 ```
 
-### 安全说明
+## Security Notes
 
-- 代理默认仅监听 `127.0.0.1`（可在「设置 → 代理接入」勾选「允许局域网连接」）
-- 开启局域网访问后监听 `0.0.0.0`，同网段设备可通过本机局域网 IP 访问
-- 客户端 `Authorization` 等请求头会透传到上游，代理不单独管理 API Key
-
+- The proxy listens on `127.0.0.1` only by default (enable **Settings → Proxy Access → Allow LAN connections** to change this)
+- With LAN access enabled it listens on `0.0.0.0`, so devices on the same network can reach it via this machine's LAN IP
+- Client headers such as `Authorization` are forwarded to the upstream service; the proxy does not manage API keys itself
