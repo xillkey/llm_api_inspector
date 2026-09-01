@@ -47,7 +47,12 @@ const ui = {
 };
 
 async function bootstrap() {
-  bindListControls({ onFilterChange: refreshList });
+  bindListControls({
+    onFilterChange: (partial) => {
+      setFilters(partial);
+      return refreshList();
+    },
+  });
   bindSettingsModal();
   bindConnectPanel(api, { onChanged: refreshAll });
   bindInspectToggle();
