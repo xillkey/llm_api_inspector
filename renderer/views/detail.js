@@ -43,7 +43,7 @@ export function renderDetail(container, detail, { activeTab = 'overview', onTabC
     el(
       'div',
       'detail-subtitle',
-      `${detail.provider_name || 'No provider'} · ${detail.path} · ${detail.state.toUpperCase()}`
+      `${detail.upstream_url || detail.path} · ${detail.state.toUpperCase()}`
     )
   );
   header.appendChild(left);
@@ -88,7 +88,8 @@ function renderOverviewPanel(detail) {
   const body = parseJson(detail.request_json) || {};
   const grid = el('div', 'kv-grid');
 
-  addKv(grid, '上游', detail.provider_name || '-', { fullWidth: true });
+  addKv(grid, '上游', detail.upstream_base_url || detail.provider_name || '-', { fullWidth: true });
+  addKv(grid, 'API URL', detail.upstream_url || detail.path || '-', { fullWidth: true });
   addKv(grid, '模型', detail.model || '-');
   addKv(grid, '流式', detail.is_stream ? '是' : '否');
   addKv(grid, '状态', detail.state);

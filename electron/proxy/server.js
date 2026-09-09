@@ -178,6 +178,7 @@ async function handleChatCompletion(req, res, bodyBuffer, upstreamBaseUrl) {
   const isStream = Boolean(requestBody.stream);
   const inspect = getInspectEnabled();
   const model = requestBody.model || extractModelFromRequestJson(bodyBuffer.toString('utf8'));
+  const upstreamUrl = buildUpstreamUrl(upstreamBaseUrl, req.url);
 
   let record = null;
   if (inspect) {
@@ -186,6 +187,8 @@ async function handleChatCompletion(req, res, bodyBuffer, upstreamBaseUrl) {
       path: req.url,
       is_stream: isStream,
       request_json: bodyBuffer.toString('utf8'),
+      upstream_base_url: upstreamBaseUrl,
+      upstream_url: upstreamUrl,
     });
     broadcast('request:created', record);
   }
@@ -197,8 +200,6 @@ async function handleChatCompletion(req, res, bodyBuffer, upstreamBaseUrl) {
     clientClosed = true;
     abortController.abort();
   });
-
-  const upstreamUrl = buildUpstreamUrl(upstreamBaseUrl, req.url);
   const upstreamHeaders = buildUpstreamHeaders(req.headers);
 
   let upstreamResponse;

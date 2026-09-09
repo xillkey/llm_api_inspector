@@ -299,11 +299,12 @@ function extractMessagePreview(requestJson) {
 }
 
 function rowToRequestSummary(row) {
-  const upstreamBaseUrl = getUpstreamBaseUrl();
   return {
     id: row.id,
     provider_id: row.provider_id,
-    provider_name: upstreamBaseUrl || row.provider_name || '透传',
+    provider_name: row.upstream_base_url || row.provider_name || '透传',
+    upstream_base_url: row.upstream_base_url || null,
+    upstream_url: row.upstream_url || null,
     model: row.model,
     path: row.path,
     is_stream: Boolean(row.is_stream),
@@ -320,11 +321,18 @@ function rowToRequestSummary(row) {
   };
 }
 
-export function createRequest({ model, path, is_stream, request_json }) {
+export function createRequest({
+  model,
+  path,
+  is_stream,
+  request_json,
+  upstream_base_url = null,
+  upstream_url = null,
+}) {
   const startedAt = new Date().toISOString();
   const result = getDb()
     .prepare(
-      'INSERT INTO requests (provider_id, model, path, is_stream, state, upstream_model, started_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO requests (provider_id, model, path, is_stream, state, upstream_model, upstream_base_url, upstream_url, started_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
     )
     .run(
       null,
@@ -333,6 +341,8 @@ export function createRequest({ model, path, is_stream, request_json }) {
       is_stream ? 1 : 0,
       'pending',
       null,
+      upstream_base_url,
+      upstream_url,
       startedAt
     );
 

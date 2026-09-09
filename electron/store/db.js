@@ -80,6 +80,18 @@ export function initDb() {
     // column already exists
   }
 
+  try {
+    db.exec('ALTER TABLE requests ADD COLUMN upstream_base_url TEXT');
+  } catch {
+    // column already exists
+  }
+
+  try {
+    db.exec('ALTER TABLE requests ADD COLUMN upstream_url TEXT');
+  } catch {
+    // column already exists
+  }
+
   return db;
 }
 
