@@ -632,6 +632,57 @@ textarea {
   grid-column: 1 / -1;
 }
 
+.conversation-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.conversation-search-bar[hidden] {
+  display: none;
+}
+
+.conversation-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  outline: none;
+}
+
+.conversation-search-count {
+  color: var(--text-muted);
+  font-size: 12px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.btn-icon {
+  min-width: 28px;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+mark.search-hit {
+  background: var(--accent-soft);
+  color: inherit;
+  border-radius: 3px;
+}
+
+mark.search-hit.active {
+  background: var(--accent);
+  color: #fff;
+}
+
 .message-list {
   display: grid;
   gap: 10px;
@@ -739,6 +790,35 @@ textarea {
   padding: 12px;
   background: var(--bg);
   margin-bottom: 8px;
+}
+
+.tool-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tool-item-header .tool-name {
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.tool-item-body {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.tool-item-body[hidden] {
+  display: none;
+}
+
+.tool-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .tool-name {

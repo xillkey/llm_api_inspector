@@ -19,6 +19,7 @@ import {
 } from './views/connect.js';
 import {
   getDefaultTabForState,
+  openPanelSearch,
   renderDetail,
   updateLiveOutput,
   stopDetailTypewriter,
@@ -57,6 +58,7 @@ async function bootstrap() {
   bindConnectPanel(api, { onChanged: refreshAll });
   bindInspectToggle();
   bindLiveFollowToggle();
+  bindPanelSearchShortcut();
 
   document.getElementById('btn-settings').addEventListener('click', async () => {
     openSettingsModal();
@@ -194,6 +196,25 @@ function handleListSelect(id) {
     return;
   }
   selectRequest(id);
+}
+
+const SEARCHABLE_TABS = ['messages', 'tools', 'response'];
+
+function bindPanelSearchShortcut() {
+  window.addEventListener('keydown', (e) => {
+    const isFind =
+      (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'f';
+    if (!isFind) return;
+    if (!SEARCHABLE_TABS.includes(ui.activeTab) || !ui.selectedDetail) return;
+
+    if (ui.activeTab === 'response') {
+      const { state } = ui.selectedDetail;
+      if (state === 'pending' || state === 'streaming') return;
+    }
+
+    e.preventDefault();
+    openPanelSearch(ui.detail, ui.activeTab);
+  });
 }
 
 function bindInspectToggle() {

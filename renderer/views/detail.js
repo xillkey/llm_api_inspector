@@ -8,6 +8,13 @@ import {
   getState,
 } from '../state.js';
 import { syncTypewriter, stopTypewriter } from '../live-typewriter.js';
+import { createSearchController } from '../search-highlight.js';
+
+const panelSearchState = {
+  messages: { query: '', open: false },
+  tools: { query: '', open: false },
+  response: { query: '', open: false },
+};
 
 const TABS = [
   { id: 'overview', label: '概览' },
@@ -114,6 +121,9 @@ function renderMessagesPanel(detail) {
   const panel = el('div', 'panel-card');
   panel.appendChild(el('h3', '', 'Messages'));
 
+  const searchBar = renderPanelSearchBar('messages', '搜索对话内容 (Ctrl+F)');
+  panel.appendChild(searchBar);
+
   const body = parseJson(detail.request_json) || {};
   const messages = body.messages || [];
   const list = el('div', 'message-list');
@@ -127,7 +137,119 @@ function renderMessagesPanel(detail) {
   }
 
   panel.appendChild(list);
+  bindPanelSearch('messages', searchBar, list, {
+    searchableSelector: '.message-content, .tool-name',
+  });
+
   return panel;
+}
+
+function renderPanelSearchBar(tabId, placeholder) {
+  const bar = el('div', 'conversation-search-bar');
+  bar.hidden = true;
+  bar.dataset.searchTab = tabId;
+
+  const input = el('input', 'conversation-search-input');
+  input.type = 'search';
+  input.placeholder = placeholder;
+  bar.appendChild(input);
+
+  const count = el('span', 'conversation-search-count', '0/0');
+  bar.appendChild(count);
+
+  const prevBtn = el('button', 'btn btn-icon', '↑');
+  prevBtn.type = 'button';
+  prevBtn.dataset.action = 'prev';
+  prevBtn.title = '上一个 (Shift+Enter)';
+  bar.appendChild(prevBtn);
+
+  const nextBtn = el('button', 'btn btn-icon', '↓');
+  nextBtn.type = 'button';
+  nextBtn.dataset.action = 'next';
+  nextBtn.title = '下一个 (Enter)';
+  bar.appendChild(nextBtn);
+
+  const closeBtn = el('button', 'btn btn-icon', '×');
+  closeBtn.type = 'button';
+  closeBtn.dataset.action = 'close';
+  closeBtn.title = '关闭 (Esc)';
+  bar.appendChild(closeBtn);
+
+  return bar;
+}
+
+function formatSearchCount({ count, index }) {
+  if (!count) return '0/0';
+  return `${index + 1}/${count}`;
+}
+
+function bindPanelSearch(tabId, searchBar, rootEl, { searchableSelector } = {}) {
+  const input = searchBar.querySelector('.conversation-search-input');
+  const countEl = searchBar.querySelector('.conversation-search-count');
+  const state = panelSearchState[tabId];
+  const controller = createSearchController(() => rootEl, { searchableSelector });
+
+  const updateCount = (result) => {
+    countEl.textContent = formatSearchCount(result);
+  };
+
+  const applySearch = () => {
+    state.query = input.value;
+    updateCount(controller.apply(state.query));
+  };
+
+  const closeSearch = () => {
+    state.open = false;
+    state.query = '';
+    input.value = '';
+    searchBar.hidden = true;
+    updateCount(controller.clear());
+  };
+
+  input.addEventListener('input', applySearch);
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      updateCount(e.shiftKey ? controller.prev() : controller.next());
+      return;
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeSearch();
+    }
+  });
+
+  searchBar.querySelector('[data-action="prev"]').addEventListener('click', () => {
+    updateCount(controller.prev());
+  });
+
+  searchBar.querySelector('[data-action="next"]').addEventListener('click', () => {
+    updateCount(controller.next());
+  });
+
+  searchBar.querySelector('[data-action="close"]').addEventListener('click', closeSearch);
+
+  if (state.open) {
+    searchBar.hidden = false;
+    input.value = state.query;
+    if (state.query) {
+      updateCount(controller.apply(state.query));
+    } else {
+      updateCount({ count: 0, index: -1 });
+    }
+  }
+}
+
+export function openPanelSearch(container, tabId) {
+  const searchBar = container.querySelector(`[data-search-tab="${tabId}"]`);
+  const input = searchBar?.querySelector('.conversation-search-input');
+  if (!searchBar || !input) return;
+
+  panelSearchState[tabId].open = true;
+  searchBar.hidden = false;
+  input.focus();
+  input.select();
 }
 
 function renderMessageBubble(msg) {
@@ -222,6 +344,7 @@ function renderTextPart(text) {
 
   const actions = el('div', 'message-actions');
   const expandBtn = el('button', 'btn btn-small', '展开');
+  expandBtn.dataset.role = 'expand-toggle';
   expandBtn.addEventListener('click', () => {
     node.classList.toggle('collapsed');
     expandBtn.textContent = node.classList.contains('collapsed') ? '展开' : '收起';
@@ -278,26 +401,57 @@ function renderToolsPanel(detail) {
   const panel = el('div', 'panel-card');
   panel.appendChild(el('h3', '', 'Tools 注册'));
 
+  const searchBar = renderPanelSearchBar('tools', '搜索工具 (Ctrl+F)');
+  panel.appendChild(searchBar);
+
   const body = parseJson(detail.request_json) || {};
   const tools = body.tools || [];
+  const toolList = el('div', 'tool-list');
 
   if (!tools.length) {
-    panel.appendChild(el('div', 'message-content', '此请求未注册 tools'));
-    return panel;
+    toolList.appendChild(el('div', 'message-content', '此请求未注册 tools'));
+  } else {
+    for (const tool of tools) {
+      toolList.appendChild(renderRegisteredToolItem(tool));
+    }
   }
 
-  for (const tool of tools) {
-    const item = el('div', 'tool-item');
-    const fn = tool.function || {};
-    item.appendChild(el('div', 'tool-name', fn.name || tool.type || 'tool'));
-    if (fn.description) item.appendChild(el('div', 'tool-desc', fn.description));
-    const schema = el('div', 'schema-tree');
-    schema.textContent = JSON.stringify(fn.parameters || tool, null, 2);
-    item.appendChild(schema);
-    panel.appendChild(item);
-  }
+  panel.appendChild(toolList);
+  bindPanelSearch('tools', searchBar, toolList, {
+    searchableSelector: '.tool-name, .tool-desc, .schema-tree',
+  });
 
   return panel;
+}
+
+function renderRegisteredToolItem(tool) {
+  const item = el('div', 'tool-item');
+  const fn = tool.function || {};
+  const name = fn.name || tool.type || 'tool';
+
+  const header = el('div', 'tool-item-header');
+  header.appendChild(el('div', 'tool-name', name));
+
+  const expandBtn = el('button', 'btn btn-small', '展开');
+  expandBtn.type = 'button';
+  expandBtn.dataset.role = 'tool-expand-toggle';
+  header.appendChild(expandBtn);
+  item.appendChild(header);
+
+  const body = el('div', 'tool-item-body');
+  body.hidden = true;
+  if (fn.description) body.appendChild(el('div', 'tool-desc', fn.description));
+  const schema = el('div', 'schema-tree');
+  schema.textContent = JSON.stringify(fn.parameters || tool, null, 2);
+  body.appendChild(schema);
+  item.appendChild(body);
+
+  expandBtn.addEventListener('click', () => {
+    body.hidden = !body.hidden;
+    expandBtn.textContent = body.hidden ? '展开' : '收起';
+  });
+
+  return item;
 }
 
 function renderResponsePanel(detail) {
@@ -306,6 +460,12 @@ function renderResponsePanel(detail) {
   const live = getLiveBuffer(detail.id);
   const response = parseJson(detail.response_json);
   const message = response?.choices?.[0]?.message || {};
+
+  let responseSearchBar = null;
+  if (!isLive) {
+    responseSearchBar = renderPanelSearchBar('response', '搜索响应内容 (Ctrl+F)');
+    panel.appendChild(responseSearchBar);
+  }
 
   const reasoning = isLive ? live.reasoning : message.reasoning_content || message.reasoning || live.reasoning;
   const content = isLive ? live.content : message.content || live.content || '';
@@ -364,6 +524,12 @@ function renderResponsePanel(detail) {
 
     toolsCard.appendChild(toolsContainer);
     panel.appendChild(toolsCard);
+  }
+
+  if (responseSearchBar) {
+    bindPanelSearch('response', responseSearchBar, panel, {
+      searchableSelector: '.live-output, .message-content, .tool-name',
+    });
   }
 
   return panel;

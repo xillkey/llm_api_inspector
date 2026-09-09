@@ -49,14 +49,12 @@ function readBody(req) {
 function buildUpstreamUrl(baseUrl, reqPath) {
   const base = baseUrl.replace(/\/+$/, '');
   const path = reqPath.startsWith('/') ? reqPath : `/${reqPath}`;
+  const suffix = path.startsWith('/v1/') ? path.slice('/v1'.length) : path;
 
-  if (base.endsWith(path)) {
+  if (base.endsWith(path) || base.endsWith(suffix)) {
     return base;
   }
-  if (path.startsWith('/v1/') && /\/v1$/.test(base)) {
-    return `${base}${path.slice('/v1'.length)}`;
-  }
-  return `${base}${path}`;
+  return `${base}${suffix}`;
 }
 
 function buildUpstreamHeaders(clientHeaders) {
